@@ -1,0 +1,6 @@
+model,requested_model_id,model_weights,first_dates_utc,repeat_dates_utc,n_requeried,n_slots,temperature_requested
+DeepSeek-V4-Pro,deepseek/deepseek-v4-pro,Open,2026-05-24,2026-05-30,911,3000,1.0
+Gemini-3.1-Pro-Preview,google/gemini-3.1-pro-preview,Proprietary,2026-05-24,2026-05-30,35,3000,1.0
+GLM-5.1,z-ai/glm-5.1,Open,2026-05-29,2026-05-30,67,3000,1.0
+GPT-5.4,openai/gpt-5.4,Proprietary,2026-05-29,,0,3000,1.0
+Qwen-3.6-Plus,qwen/qwen3.6-plus,Proprietary,2026-05-25,2026-05-30,110,3000,1.0

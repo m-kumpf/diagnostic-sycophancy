@@ -1,9 +1,4 @@
-"""Model registry and run configuration.
-
-All LLM calls go through OpenRouter (https://openrouter.ai/api/v1), which
-exposes every provider behind one OpenAI-compatible endpoint. Adding a new
-model means appending one entry to ``MODELS`` — no other code changes needed.
-"""
+"""Requested OpenRouter endpoints and collection settings."""
 
 from __future__ import annotations
 

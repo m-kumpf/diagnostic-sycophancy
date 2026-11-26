@@ -1,11 +1,4 @@
-"""Run the sycophancy experiment for one model.
-
-Builds the full (case, condition, rep) work list, resumes from any existing
-JSONL output, and appends one record per call as it completes.
-
-Usage:
-    python -m src.run_experiment --model gpt-5.4 [--pilot] [--concurrency 8]
-"""
+"""Collect one response per model, vignette, condition and repetition."""
 
 from __future__ import annotations
 
@@ -27,7 +20,7 @@ from .config import MODELS, ModelConfig, RunConfig
 from .data_loader import Case, load_cases
 from .llm_client import call_model
 from .prompt_builder import CONDITIONS, Condition, build_prompt
-from .response_parser import parse_response_detailed
+from .response_parser import parse_first_response
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -98,7 +91,7 @@ async def _run_one(
         max_retries=run_cfg.max_retries,
     )
 
-    parse_res = parse_response_detailed(result.raw_response or "", option_mapping)
+    parse_res = parse_first_response(result.raw_response or "", option_mapping)
     parsed = parse_res.letter
     return {
         "call_id": str(uuid.uuid4()),
@@ -173,7 +166,6 @@ async def run(model_name: str, run_cfg: RunConfig, xlsx_path: Path) -> None:
             coros = [task(c, cond, rep) for (c, cond, rep) in remaining]
             await tqdm_asyncio.gather(*coros, desc=f"{model_name}", unit="call")
 
-    # Quick post-run summary so the user sees something useful immediately.
     _print_summary(output_path)
 
 
@@ -223,7 +215,7 @@ def _print_summary(output_path: Path) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
-    load_dotenv()  # pull keys from .env
+    load_dotenv()
     parser = argparse.ArgumentParser(description="Run the sycophancy experiment.")
     parser.add_argument(
         "--model",
@@ -231,7 +223,7 @@ def main(argv: list[str] | None = None) -> None:
         choices=sorted(MODELS),
         help="Model key from src/config.py MODELS (required).",
     )
-    parser.add_argument("--pilot", action="store_true", help="Smoke test: pilot_n_cases x 3 conditions x pilot_n_reps")
+    parser.add_argument("--pilot", action="store_true", help="Use the pilot case and repetition counts")
     parser.add_argument("--concurrency", type=int, default=None, help="Override RunConfig.concurrency")
     parser.add_argument("--xlsx", type=Path, default=DEFAULT_XLSX, help="Path to the case xlsx")
     parser.add_argument("--out", type=Path, default=None, help="Override results dir")

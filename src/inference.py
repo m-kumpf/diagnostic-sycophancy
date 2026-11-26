@@ -1,24 +1,4 @@
-"""Inferential analysis for the sycophancy experiment.
-
-Pre-specified framework:
-  * Engine: per-model GEE, outcome ~ C(condition, ref=neutral), clustered by
-    case_id, Binomial family, exchangeable working correlation, cluster-robust
-    SEs. Effects = odds ratios (+ Wald p) and bootstrap risk-difference lifts.
-  * Primary endpoint: severe-neutral DD_a lift, PER MODEL, two-sided a=0.05,
-    no cross-model correction (each model a distinct confirmatory test).
-  * Secondary family (Holm within each model): mild-neutral DD_a,
-    severe-mild DD_a, accuracy-drop mild, accuracy-drop severe.
-  * Cross-check: sign-flip permutation test on the mean per-case lift
-    (Wilcoxon also reported, flagged low-power due to many zero-differences).
-  * Models-differ: pooled GEE with condition x model interaction, joint Wald.
-
-Forward-compatible: iterates whatever models/cases/conditions are present;
-the pooled interaction uses C(model) so it adapts to more models/cases.
-
-Usage:
-    python -m src.inference [--results-dir results/raw] [--out results/analysis]
-                            [--n-boot 2000] [--n-perm 10000]
-"""
+"""Case-clustered binomial GEE contrasts, bootstrap risk differences and paired sign-flip tests."""
 
 from __future__ import annotations
 
@@ -31,18 +11,15 @@ import pandas as pd
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 from scipy import stats
-from statsmodels.genmod.cov_struct import Exchangeable, Independence
+from statsmodels.genmod.cov_struct import Exchangeable
 from statsmodels.tools.sm_exceptions import ConvergenceWarning
 
-from .analysis import (PROJECT_ROOT, SEED, _bootstrap_ci, _model_arrays, _rate,
+from .analysis import (PROJECT_ROOT, SEED, _bootstrap_ci, _holm, _model_arrays, _rate,
                        load_results)
 
 ALPHA = 0.05
 
 
-# --------------------------------------------------------------------------- #
-# GEE helpers
-# --------------------------------------------------------------------------- #
 def _fit_gee(d: pd.DataFrame, outcome: str, cov=None):
     """Fit a per-(sub)group GEE; returns (res, converged_flag)."""
     dd = d.copy()
@@ -81,9 +58,6 @@ def _contrast(res, plus=None, minus=None):
     return np.exp(est), np.exp(lo), np.exp(hi), p
 
 
-# --------------------------------------------------------------------------- #
-# Effect-size + cross-check helpers (per model, on per-case arrays)
-# --------------------------------------------------------------------------- #
 def _per_case_rates(arr, cond, num_key):
     a = arr[cond]
     with np.errstate(invalid="ignore", divide="ignore"):
@@ -123,24 +97,9 @@ def _wilcoxon_p(arr, cond_a, cond_b, num_key):
     nz = d[d != 0]
     if len(nz) < 6:
         return np.nan, int(len(nz))
-    return float(stats.wilcoxon(nz).pvalue), int(len(nz))
+    return float(stats.wilcoxon(nz, method="approx").pvalue), int(len(nz))
 
 
-def _holm(pvals: list[float]) -> list[float]:
-    m = len(pvals)
-    order = np.argsort(pvals)
-    adj = np.empty(m)
-    running = 0.0
-    for rank, i in enumerate(order):
-        val = (m - rank) * pvals[i]
-        running = max(running, val)
-        adj[i] = min(running, 1.0)
-    return adj.tolist()
-
-
-# --------------------------------------------------------------------------- #
-# Tables
-# --------------------------------------------------------------------------- #
 def primary_table(df, n_boot, n_perm):
     rows = []
     for model, dfm in df.groupby("model"):
@@ -200,7 +159,7 @@ def secondary_table(df, n_boot, n_perm):
 
 
 def interaction_table(df):
-    """Pooled GEE with condition x model interaction; joint Wald (future-proof)."""
+    """Pooled GEE with condition x model interaction; joint Wald test."""
     rows = []
     if df["model"].nunique() < 2:
         return pd.DataFrame([{"note": "interaction skipped: <2 models"}])
@@ -234,15 +193,13 @@ def interaction_table(df):
     return pd.DataFrame(rows)
 
 
-# --------------------------------------------------------------------------- #
-# Driver
-# --------------------------------------------------------------------------- #
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Inferential analysis.")
     parser.add_argument("--results-dir", type=Path, default=PROJECT_ROOT / "results" / "raw")
     parser.add_argument("--out", type=Path, default=PROJECT_ROOT / "results" / "analysis")
     parser.add_argument("--n-boot", type=int, default=2000)
     parser.add_argument("--n-perm", type=int, default=10000)
+    parser.add_argument("--quiet", action="store_true", help="Write tables without printing their contents.")
     args = parser.parse_args(argv)
 
     df = load_results(args.results_dir)
@@ -259,6 +216,10 @@ def main(argv=None):
     interaction.to_csv(args.out / "inference_interaction.csv", index=False)
 
     pd.set_option("display.width", 160, "display.max_columns", 30)
+
+    if args.quiet:
+        print(f"Wrote GEE and permutation tests to {args.out}")
+        return
 
     def pct(d, cols):
         d = d.copy()

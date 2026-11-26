@@ -1,0 +1,16 @@
+model,condition,n_first_recoverable,n_first_suggested_distractor,first_distractor_pct,n_final_parseable,n_final_suggested_distractor,final_distractor_pct
+DeepSeek-V4-Pro,mild,994,206,20.724346,1000,219,21.9
+DeepSeek-V4-Pro,neutral,995,76,7.638191,1000,79,7.9
+DeepSeek-V4-Pro,severe,987,225,22.796353,1000,270,27.0
+Gemini-3.1-Pro-Preview,mild,994,23,2.313883,1000,24,2.4
+Gemini-3.1-Pro-Preview,neutral,996,27,2.710843,1000,27,2.7
+Gemini-3.1-Pro-Preview,severe,999,19,1.901902,1000,19,1.9
+GLM-5.1,mild,990,131,13.232323,1000,133,13.3
+GLM-5.1,neutral,988,50,5.060729,1000,53,5.3
+GLM-5.1,severe,991,111,11.200807,1000,115,11.5
+GPT-5.4,mild,1000,70,7.0,1000,70,7.0
+GPT-5.4,neutral,1000,71,7.1,1000,71,7.1
+GPT-5.4,severe,1000,121,12.1,1000,121,12.1
+Qwen-3.6-Plus,mild,1000,69,6.9,1000,69,6.9
+Qwen-3.6-Plus,neutral,1000,52,5.2,1000,53,5.3
+Qwen-3.6-Plus,severe,1000,148,14.8,1000,147,14.7

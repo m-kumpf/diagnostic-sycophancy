@@ -1,25 +1,4 @@
-"""Descriptive analysis for the sycophancy experiment.
-
-Computes, per model and condition: accuracy, DD_a (sycophancy-distractor) rate,
-the DD_a lift over the neutral baseline, accuracy drop, resistance, and
-case-level susceptibility — all with cluster-bootstrap-by-case 95% CIs.
-
-Design decisions:
-  * Sycophancy headline = DD_a *lift over neutral*; raw rates reported too.
-  * Primary endpoint = severe-neutral DD_a lift, per model (two-sided a=0.05).
-  * CIs via cluster bootstrap resampling CASES (not calls), since reps within a
-    case are correlated.
-  * Unparseable calls are excluded from accuracy/DD_a denominators (reported
-    separately); they never enter a numerator (is_correct/chose_distractor are
-    False for them).
-
-Forward-compatible: auto-discovers every results/raw/*.jsonl (more models or
-cases just drop in); nothing about the model list, case count, condition set,
-or rep count is hardcoded.
-
-Usage:
-    python -m src.analysis [--results-dir results/raw] [--out results/analysis] [--n-boot 2000]
-"""
+"""Descriptive rates, case-level outcomes and case-bootstrap confidence intervals."""
 
 from __future__ import annotations
 
@@ -52,14 +31,11 @@ SEED = 20260524
 ALPHA = 0.05
 
 
-# --------------------------------------------------------------------------- #
-# Data loading
-# --------------------------------------------------------------------------- #
 def _specialty(case_id: str) -> str:
     return SPECIALTY_MAP.get(case_id.split("_", 1)[0], "unknown")
 
 
-def load_results(results_dir: Path) -> pd.DataFrame:
+def load_results(results_dir: Path, extra_fields: tuple[str, ...] = ()) -> pd.DataFrame:
     """One row per call across all (non-pilot) model files in results_dir."""
     rows = []
     for path in sorted(results_dir.glob("*.jsonl")):
@@ -72,6 +48,7 @@ def load_results(results_dir: Path) -> pd.DataFrame:
                     continue
                 r = json.loads(line)
                 rows.append({
+                    **{key: r.get(key) for key in extra_fields},
                     "model": r["model"],
                     "case_id": r["case_id"],
                     "specialty": _specialty(r["case_id"]),
@@ -94,9 +71,6 @@ def load_results(results_dir: Path) -> pd.DataFrame:
     return df
 
 
-# --------------------------------------------------------------------------- #
-# Per-model per-case arrays (drive fast cluster bootstrap)
-# --------------------------------------------------------------------------- #
 def _model_arrays(df_model: pd.DataFrame):
     """Aligned per-case count arrays for each condition: tot/parseable/correct/dd_a."""
     cases = sorted(df_model["case_id"].unique())
@@ -133,9 +107,6 @@ def _bootstrap_ci(n_cases: int, stat_fn, n_boot: int, seed: int):
     return lo, hi
 
 
-# --------------------------------------------------------------------------- #
-# Tables
-# --------------------------------------------------------------------------- #
 def rates_table(df: pd.DataFrame, n_boot: int) -> pd.DataFrame:
     out = []
     for model, dfm in df.groupby("model"):
@@ -427,7 +398,7 @@ def subset_contrast_table(case: pd.DataFrame, n_boot: int) -> pd.DataFrame:
 
 
 def specialty_table(df: pd.DataFrame) -> pd.DataFrame:
-    """Secondary, CAVEATED: DD_a rate & lift by specialty x condition (imbalanced!)."""
+    """Observed accuracy and distractor selection by specialty and condition."""
     g = (df[df["parseable"]]
          .groupby(["model", "specialty", "condition"], observed=True)
          .agg(n_cases=("case_id", "nunique"), n_parseable=("parseable", "size"),
@@ -436,14 +407,12 @@ def specialty_table(df: pd.DataFrame) -> pd.DataFrame:
     return g
 
 
-# --------------------------------------------------------------------------- #
-# Driver
-# --------------------------------------------------------------------------- #
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Descriptive analysis.")
     parser.add_argument("--results-dir", type=Path, default=PROJECT_ROOT / "results" / "raw")
     parser.add_argument("--out", type=Path, default=PROJECT_ROOT / "results" / "analysis")
     parser.add_argument("--n-boot", type=int, default=2000)
+    parser.add_argument("--quiet", action="store_true", help="Write tables without printing their contents.")
     args = parser.parse_args(argv)
 
     df = load_results(args.results_dir)
@@ -480,7 +449,10 @@ def main(argv: list[str] | None = None) -> None:
     pn_inf.to_csv(out_dir / "dd_a_perfect_neutral_inference.csv", index=False)
     specialty.to_csv(out_dir / "specialty_breakdown.csv", index=False)
 
-    # ---- printed summary ----
+    if args.quiet:
+        print(f"Wrote descriptive tables to {out_dir}")
+        return
+
     pd.set_option("display.width", 140, "display.max_columns", 20)
     print("\n=== Rates (accuracy, DD_a) with 95% cluster-bootstrap CI ===")
     show = rates.copy()
@@ -515,9 +487,6 @@ def main(argv: list[str] | None = None) -> None:
     print(heterog.round(3).to_string(index=False))
 
     print(f"\nWrote CSVs to {out_dir}")
-    print("Figures: run `python -m src.figures` (renders from these CSVs).")
-    print("NOTE: specialty_breakdown.csv is descriptive only — specialties are imbalanced "
-          "(ORTHO 47 … PED 4); not a powered comparison.")
 
 
 if __name__ == "__main__":

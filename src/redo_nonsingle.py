@@ -1,17 +1,4 @@
-"""Re-run any cell whose response wasn't a clean single letter.
-
-For a given model, identifies every record in `results/raw/{model}.jsonl` where
-`parse_method != "single_letter"` and re-calls the API for that exact cell
-(same case, condition, repetition, and shuffle seed) until the model returns a
-bare letter or we hit `--max-retries`. The original record is overwritten in
-place; `call_id`, `option_mapping`, `correct_letter`, `distractor_letter`,
-`prompt`, and `random_seed` are preserved so the cell identity is unchanged.
-
-Idempotent: re-running picks up only the still-non-single rows.
-
-Usage:
-    python -m src.redo_nonsingle --model glm-5.1 [--max-retries 5] [--concurrency 8]
-"""
+"""Repeat format-ineligible calls with their recorded prompt, options and temperature."""
 
 from __future__ import annotations
 
@@ -28,12 +15,12 @@ from dotenv import load_dotenv
 from tqdm.asyncio import tqdm_asyncio
 
 from .config import MODELS, RunConfig
-from .data_loader import load_cases
 from .export_csv import convert as export_csv
 from .llm_client import call_model
-from .prompt_builder import build_prompt
 from .response_parser import parse_response_detailed
 from .run_experiment import DEFAULT_XLSX, PROJECT_ROOT, per_call_seed
+from .data_loader import load_cases
+from .prompt_builder import build_prompt
 
 
 def _is_clean(rec: dict) -> bool:
@@ -47,16 +34,16 @@ async def _retry_cell(client, model_cfg, case, rec, run_cfg, sem, max_retries):
     seed = per_call_seed(run_cfg.master_seed, model_cfg.name, case.case_id, condition, rep)
     rng = random.Random(seed)
     prompt, option_mapping, correct_letter, distractor_letter = build_prompt(case, condition, rng)
-    # sanity: the rebuilt shuffle must match the recorded one
-    assert option_mapping == rec["option_mapping"], (
-        f"shuffle mismatch for {rec['call_id']} — recompute disagrees with stored option_mapping"
-    )
+    if (prompt, option_mapping, correct_letter, distractor_letter) != (
+        rec["prompt"], rec["option_mapping"], rec["correct_letter"], rec["distractor_letter"]
+    ):
+        raise ValueError(f"Prompt or options differ from the recorded call {rec['call_id']}")
 
     last_result = None
     last_parse = None
     for attempt in range(1, max_retries + 1):
         res = await call_model(
-            client, model_cfg, prompt, run_cfg.temperature, sem,
+            client, model_cfg, rec["prompt"], rec["temperature"], sem,
             max_retries=run_cfg.max_retries,
         )
         parse = parse_response_detailed(res.raw_response or "", option_mapping)
@@ -82,14 +69,16 @@ async def _retry_cell(client, model_cfg, case, rec, run_cfg, sem, max_retries):
     }
 
 
-async def main_async(model_name: str, max_retries: int, concurrency: int, xlsx_path: Path):
+async def main_async(model_name: str, max_retries: int, concurrency: int, xlsx_path: Path, results_dir=None):
     if model_name not in MODELS:
         raise SystemExit(f"Unknown model {model_name!r}. Known: {sorted(MODELS)}")
     model_cfg = MODELS[model_name]
     run_cfg = RunConfig(concurrency=concurrency)
 
-    jsonl_path = run_cfg.results_dir / f"{model_name}.jsonl"
-    jsonl_path = PROJECT_ROOT / jsonl_path
+    if max_retries < 1 or concurrency < 1:
+        raise ValueError("Retry and concurrency counts must be positive")
+    directory = Path(results_dir) if results_dir is not None else PROJECT_ROOT / run_cfg.results_dir
+    jsonl_path = directory / f"{model_name}.jsonl"
     if not jsonl_path.exists():
         raise SystemExit(f"Not found: {jsonl_path}")
 
@@ -117,7 +106,6 @@ async def main_async(model_name: str, max_retries: int, concurrency: int, xlsx_p
         coros = [task(i, r) for i, r in targets]
         results = await tqdm_asyncio.gather(*coros, desc=f"{model_name}", unit="cell")
 
-    # Atomic in-place rewrite.
     tmp = jsonl_path.with_suffix(jsonl_path.suffix + ".tmp")
     with tmp.open("w", encoding="utf-8") as f:
         for r in records:
@@ -127,7 +115,6 @@ async def main_async(model_name: str, max_retries: int, concurrency: int, xlsx_p
     csv_path = jsonl_path.with_suffix(".csv")
     n_csv = export_csv(jsonl_path, csv_path, include_prompt=False)
 
-    # Summary.
     now_single = sum(1 for r in results if r["parse_method"] == "single_letter")
     still_non = len(results) - now_single
     total_api_calls = sum(r["retries_used"] for r in results)
@@ -143,12 +130,13 @@ def main(argv=None):
     parser.add_argument("--model", required=True, choices=sorted(MODELS),
                         help="Model key from src/config.py MODELS")
     parser.add_argument("--max-retries", type=int, default=5,
-                        help="Max API attempts per cell to coax a single-letter response (default: 5)")
+                        help="Maximum format re-queries per response (default: 5)")
     parser.add_argument("--concurrency", type=int, default=8)
     parser.add_argument("--xlsx", type=Path, default=DEFAULT_XLSX)
+    parser.add_argument("--out", type=Path, help="Directory containing the collection JSONL files.")
     args = parser.parse_args(argv)
 
-    asyncio.run(main_async(args.model, args.max_retries, args.concurrency, args.xlsx))
+    asyncio.run(main_async(args.model, args.max_retries, args.concurrency, args.xlsx, args.out))
 
 
 if __name__ == "__main__":

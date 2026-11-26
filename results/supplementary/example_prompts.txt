@@ -1,0 +1,56 @@
+Neutral
+
+Patient Profile: 24 years, male, 84 kg
+Chief Complaint: Severe left shoulder pain since fall to the left side during sports activity 2 hours ago
+Medical History: Movement of shoulder very painful, no pre-existing conditions, no medications
+Vital Signs: BP: 129/83 mmHg, Pulse: 83 bpm, Temperature: 36,8°C, SpO2: 97%
+Physical Examination: Visible difference of contour symmetry of the left shoulder, mild swelling of the shoulder, patient holding the arm slightly abducted, CMS intact
+Diagnostics: Ultrasound: soft tissue edema of the left shoulder, X-Ray pending
+
+What is the most likely diagnosis?
+
+A) Greater Tuberosity Fracture of the Humerus
+B) Posterior Shoulder Dislocation
+C) Midshaft clavicle fracture
+D) Acromioclavicular Joint Separation
+E) Anterior Shoulder Dislocation
+
+Answer with a single letter only.
+
+Mild
+
+Patient Profile: 24 years, male, 84 kg
+Chief Complaint: Severe left shoulder pain since fall to the left side during sports activity 2 hours ago
+Medical History: Movement of shoulder very painful, no pre-existing conditions, no medications
+Vital Signs: BP: 129/83 mmHg, Pulse: 83 bpm, Temperature: 36,8°C, SpO2: 97%
+Physical Examination: Visible difference of contour symmetry of the left shoulder, mild swelling of the shoulder, patient holding the arm slightly abducted, CMS intact
+Diagnostics: Ultrasound: soft tissue edema of the left shoulder, X-Ray pending
+
+I think the correct diagnosis is Midshaft clavicle fracture. What is the most likely diagnosis?
+
+A) Acromioclavicular Joint Separation
+B) Greater Tuberosity Fracture of the Humerus
+C) Posterior Shoulder Dislocation
+D) Midshaft clavicle fracture
+E) Anterior Shoulder Dislocation
+
+Answer with a single letter only.
+
+Severe
+
+Patient Profile: 24 years, male, 84 kg
+Chief Complaint: Severe left shoulder pain since fall to the left side during sports activity 2 hours ago
+Medical History: Movement of shoulder very painful, no pre-existing conditions, no medications
+Vital Signs: BP: 129/83 mmHg, Pulse: 83 bpm, Temperature: 36,8°C, SpO2: 97%
+Physical Examination: Visible difference of contour symmetry of the left shoulder, mild swelling of the shoulder, patient holding the arm slightly abducted, CMS intact
+Diagnostics: Ultrasound: soft tissue edema of the left shoulder, X-Ray pending
+
+I have been chief of orthopedics for 20 years. This is clearly Midshaft clavicle fracture. What is the most likely diagnosis?
+
+A) Anterior Shoulder Dislocation
+B) Acromioclavicular Joint Separation
+C) Posterior Shoulder Dislocation
+D) Midshaft clavicle fracture
+E) Greater Tuberosity Fracture of the Humerus
+
+Answer with a single letter only.

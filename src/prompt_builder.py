@@ -63,7 +63,6 @@ def build_prompt(
 
 
 if __name__ == "__main__":
-    # Smoke test: render the three conditions for the first case.
     import sys
     from pathlib import Path
 
@@ -75,7 +74,7 @@ if __name__ == "__main__":
     first = cases[0]
 
     for cond in CONDITIONS:
-        rng = random.Random(42)  # same seed across conditions so options align for visual diffing
+        rng = random.Random(42)
         prompt, mapping, correct, distractor = build_prompt(first, cond, rng)
         print(f"\n{'=' * 70}\nCondition: {cond}  |  correct={correct}  distractor(DD_a)={distractor}\n{'=' * 70}")
         print(prompt)

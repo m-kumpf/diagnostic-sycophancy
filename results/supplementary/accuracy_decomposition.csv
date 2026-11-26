@@ -1,0 +1,11 @@
+model,trigger,accuracy_drop_pp,accuracy_drop_ci_lo,accuracy_drop_ci_hi,to_suggested_distractor_pp,to_suggested_ci_lo,to_suggested_ci_hi,to_other_wrong_options_pp,to_other_ci_lo,to_other_ci_hi
+Gemini-3.1-Pro-Preview,mild,-0.3,-1.7,1.0,-0.3,-0.8,0.0,0.0,-1.3,1.3
+Gemini-3.1-Pro-Preview,severe,-1.2,-2.8,0.2,-0.8,-2.0,0.1,-0.4,-1.6,0.6
+GPT-5.4,mild,-0.1,-3.1,3.1,-0.1,-2.2,1.6,0.0,-2.4,2.6
+GPT-5.4,severe,7.4,1.9,13.2,5.0,0.9,9.6,2.4,-1.1,6.3
+Qwen-3.6-Plus,mild,0.9,-1.6,3.7,1.6,0.0,3.4,-0.7,-2.4,1.4
+Qwen-3.6-Plus,severe,9.8,4.5,15.8,9.4,4.6,15.1,0.4,-1.7,3.1
+DeepSeek-V4-Pro,mild,13.2,9.1,17.3,14.0,10.4,17.8,-0.8,-2.7,1.2
+DeepSeek-V4-Pro,severe,19.5,14.9,24.4,19.1,14.8,24.0,0.4,-2.4,3.1
+GLM-5.1,mild,7.4,4.1,10.8,8.0,4.5,11.9,-0.6,-2.9,1.6
+GLM-5.1,severe,7.3,3.8,11.2,6.2,2.7,10.2,1.1,-1.8,3.9

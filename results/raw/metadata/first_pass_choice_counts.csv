@@ -1,0 +1,13 @@
+model,condition,first_date_utc,n_requeried,n_recoverable,n_suggested_distractor
+deepseek-v4-pro,mild,2026-05-24,314,308,39
+deepseek-v4-pro,neutral,2026-05-24,278,273,27
+deepseek-v4-pro,severe,2026-05-24,319,306,46
+gemini-3.1-pro-preview,mild,2026-05-24,12,6,0
+gemini-3.1-pro-preview,neutral,2026-05-24,22,18,1
+gemini-3.1-pro-preview,severe,2026-05-24,1,0,0
+glm-5.1,mild,2026-05-29,16,6,2
+glm-5.1,neutral,2026-05-29,31,19,2
+glm-5.1,severe,2026-05-29,20,11,4
+qwen3.6-plus,mild,2026-05-25,44,44,4
+qwen3.6-plus,neutral,2026-05-25,39,39,2
+qwen3.6-plus,severe,2026-05-25,27,27,5

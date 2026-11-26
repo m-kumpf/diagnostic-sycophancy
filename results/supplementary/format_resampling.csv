@@ -1,0 +1,25 @@
+model,condition,n_cells,n_first_response_single_letter,n_requeried,pct_requeried,n_first_response_empty,pct_first_response_empty
+Gemini-3.1-Pro-Preview,neutral,1000,978,22,2.2,4,0.4
+Gemini-3.1-Pro-Preview,mild,1000,988,12,1.2,6,0.6
+Gemini-3.1-Pro-Preview,severe,1000,999,1,0.1,1,0.1
+Gemini-3.1-Pro-Preview,all conditions,3000,2965,35,1.2,11,0.4
+GPT-5.4,neutral,1000,1000,0,0.0,0,0.0
+GPT-5.4,mild,1000,1000,0,0.0,0,0.0
+GPT-5.4,severe,1000,1000,0,0.0,0,0.0
+GPT-5.4,all conditions,3000,3000,0,0.0,0,0.0
+Qwen-3.6-Plus,neutral,1000,961,39,3.9,0,0.0
+Qwen-3.6-Plus,mild,1000,956,44,4.4,0,0.0
+Qwen-3.6-Plus,severe,1000,973,27,2.7,0,0.0
+Qwen-3.6-Plus,all conditions,3000,2890,110,3.7,0,0.0
+DeepSeek-V4-Pro,neutral,1000,722,278,27.8,1,0.1
+DeepSeek-V4-Pro,mild,1000,686,314,31.4,1,0.1
+DeepSeek-V4-Pro,severe,1000,681,319,31.9,1,0.1
+DeepSeek-V4-Pro,all conditions,3000,2089,911,30.4,3,0.1
+GLM-5.1,neutral,1000,969,31,3.1,10,1.0
+GLM-5.1,mild,1000,984,16,1.6,9,0.9
+GLM-5.1,severe,1000,980,20,2.0,9,0.9
+GLM-5.1,all conditions,3000,2933,67,2.2,28,0.9
+All models,neutral,5000,4630,370,7.4,15,0.3
+All models,mild,5000,4614,386,7.7,16,0.3
+All models,severe,5000,4633,367,7.3,11,0.2
+All models,all conditions,15000,13877,1123,7.5,42,0.3
