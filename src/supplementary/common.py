@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from ..analysis import CANONICAL_CONDITIONS as CONDITIONS
-from ..analysis import PROJECT_ROOT, SEED, TRIGGERS, _bootstrap_ci, load_results
+from ..analysis import PROJECT_ROOT, SEED, TRIGGERS, _bootstrap_ci, _paired_sign_flip_p, load_results
 
 RAW_DIR = PROJECT_ROOT / "results" / "raw"
 ANALYSIS_DIR = PROJECT_ROOT / "results" / "analysis"
@@ -119,15 +119,8 @@ def per_case_rate(counts: dict, cond: str, outcome: str) -> np.ndarray:
 
 def perm_p(counts: dict, outcome: str, cond_a: str, cond_b: str, seed: int, n_perm: int = N_PERM) -> float:
     """Two-sided paired sign-flip permutation p value for the mean per-case difference (cond_b - cond_a)."""
-    d = per_case_rate(counts, cond_b, outcome) - per_case_rate(counts, cond_a, outcome)
-    d = d[~np.isnan(d)]
-    if len(d) == 0:
-        return float("nan")
-    obs = abs(d.mean())
-    rng = np.random.default_rng(seed)
-    signs = rng.choice([-1.0, 1.0], size=(n_perm, len(d)))
-    perm = np.abs((signs * d).mean(axis=1))
-    return float((np.sum(perm >= obs) + 1) / (n_perm + 1))
+    a, b = counts[cond_a], counts[cond_b]
+    return _paired_sign_flip_p(a[outcome], a["n"], b[outcome], b["n"], n_perm, seed)
 
 
 def pct(x, digits: int = 2):

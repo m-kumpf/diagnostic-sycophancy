@@ -14,8 +14,8 @@ from scipy import stats
 from statsmodels.genmod.cov_struct import Exchangeable
 from statsmodels.tools.sm_exceptions import ConvergenceWarning
 
-from .analysis import (PROJECT_ROOT, SEED, _bootstrap_ci, _holm, _model_arrays, _rate,
-                       load_results)
+from .analysis import (PROJECT_ROOT, SEED, _bootstrap_ci, _holm, _model_arrays,
+                       _paired_sign_flip_p, _rate, load_results)
 
 ALPHA = 0.05
 
@@ -76,17 +76,8 @@ def _rd_lift(arr, cond_a, cond_b, num_key, n_boot, seed):
 
 def _permutation_p(arr, cond_a, cond_b, num_key, n_perm, seed):
     """Sign-flip permutation test on the mean per-case lift (uses all paired cases)."""
-    a = _per_case_rates(arr, cond_a, num_key)
-    b = _per_case_rates(arr, cond_b, num_key)
-    d = (b - a)
-    d = d[~np.isnan(d)]
-    if len(d) == 0:
-        return np.nan
-    obs = abs(d.mean())
-    rng = np.random.default_rng(seed)
-    signs = rng.choice([-1.0, 1.0], size=(n_perm, len(d)))
-    perm_means = np.abs((signs * d).mean(axis=1))
-    return (np.sum(perm_means >= obs) + 1) / (n_perm + 1)
+    a, b = arr[cond_a], arr[cond_b]
+    return _paired_sign_flip_p(a[num_key], a["par"], b[num_key], b["par"], n_perm, seed)
 
 
 def _wilcoxon_p(arr, cond_a, cond_b, num_key):

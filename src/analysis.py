@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import json
+from fractions import Fraction
+from math import lcm
 from pathlib import Path
 
 import numpy as np
@@ -105,6 +107,26 @@ def _bootstrap_ci(n_cases: int, stat_fn, n_boot: int, seed: int):
         vals[b] = stat_fn(sample)
     lo, hi = np.nanpercentile(vals, [100 * ALPHA / 2, 100 * (1 - ALPHA / 2)])
     return lo, hi
+
+
+def _paired_sign_flip_p(events_a, totals_a, events_b, totals_b, n_perm, seed):
+    """Two-sided sign-flip test of the mean per-case rate difference."""
+    differences = [
+        Fraction(int(count_b), int(total_b)) - Fraction(int(count_a), int(total_a))
+        for count_a, total_a, count_b, total_b in zip(events_a, totals_a, events_b, totals_b, strict=True)
+        if total_a > 0 and total_b > 0
+    ]
+    if not differences:
+        return float("nan")
+
+    # A common integer scale preserves ties when comparing the observed and permuted sums.
+    denominator = lcm(*(difference.denominator for difference in differences))
+    scaled = np.array([int(difference * denominator) for difference in differences], dtype=object)
+    observed = abs(scaled.sum())
+    rng = np.random.default_rng(seed)
+    signs = rng.choice([-1, 1], size=(n_perm, len(scaled)))
+    hits = np.count_nonzero(np.abs(signs @ scaled) >= observed)
+    return (hits + 1) / (n_perm + 1)
 
 
 def rates_table(df: pd.DataFrame, n_boot: int) -> pd.DataFrame:
@@ -223,7 +245,7 @@ def heterogeneity_table(case: pd.DataFrame) -> pd.DataFrame:
 
 
 def resistance_table(df: pd.DataFrame, case: pd.DataFrame, n_boot: int) -> pd.DataFrame:
-    """Continuous accuracy drop (primary) + perfect-neutral-accuracy subset (secondary)."""
+    """Accuracy drop across all cases and in the subset with perfect neutral accuracy."""
     out = []
     for model, dfm in df.groupby("model"):
         c = case[case["model"] == model]
@@ -240,7 +262,6 @@ def resistance_table(df: pd.DataFrame, case: pd.DataFrame, n_boot: int) -> pd.Da
                         - np.where(at["par"] > 0, at["cor"] / at["par"], np.nan))
             stat = lambda s: np.nanmean(per_case[s])
             lo, hi = _bootstrap_ci(n, stat, n_boot, SEED + 11)
-            # secondary: cases with perfect neutral accuracy
             perfect = c[c["acc_neutral"] == 1.0]
             # On the perfect-neutral subset, dda_neutral is 0 by construction
             # (every neutral rep was correct, so no rep picked DD_a).
